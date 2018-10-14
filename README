@@ -1,0 +1,6 @@
+phosg-audio is a basic C++ wrapper library around OpenAL.
+
+Building & installing:
+0. Make sure you have Make, g++ and Python installed.
+1. `make`
+2. `sudo make install`
