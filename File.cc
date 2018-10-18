@@ -167,6 +167,10 @@ WAVContents load_wav(FILE* f) {
       contents.num_channels = wav.num_channels;
 
     } else if (chunk_header.magic == 0x6C706D73) { // 'smpl'
+      if (wav.wave_magic == 0) {
+        throw runtime_error("smpl chunk is before WAVE chunk");
+      }
+
       const string data = freadx(f, chunk_header.size);
       const SampleChunkHeader* sample_header = reinterpret_cast<const SampleChunkHeader*>(data.data());
       const char* last_loop_ptr = data.data() + data.size() - sizeof(sample_header->loops[0]);
@@ -179,9 +183,9 @@ WAVContents load_wav(FILE* f) {
         if (reinterpret_cast<const char*>(header_loop) > last_loop_ptr) {
           throw runtime_error("sound has malformed loop information");
         }
-        contents_loop.start = header_loop->loop_start;
-        contents_loop.end = sample_header->loops[x].loop_end;
-        contents_loop.type = sample_header->loops[x].loop_type;
+        contents_loop.start = header_loop->loop_start / (wav.bits_per_sample >> 3);
+        contents_loop.end = header_loop->loop_end / (wav.bits_per_sample >> 3);
+        contents_loop.type = header_loop->loop_type;
       }
 
     } else if (chunk_header.magic == 0x61746164) { // 'data'
@@ -224,6 +228,8 @@ WAVContents load_wav(FILE* f) {
       fseek(f, chunk_header.size, SEEK_CUR);
     }
   }
+
+  // if there are loops, convert the byte offsets to 
 
   return contents;
 }
