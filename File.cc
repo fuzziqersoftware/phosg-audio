@@ -11,6 +11,8 @@ using namespace std;
 
 
 
+WAVContents::WAVContents() : num_channels(0), sample_rate(0), base_note(-1) { }
+
 float WAVContents::seconds() const {
   return static_cast<float>(this->samples.size()) / this->sample_rate;
 }
@@ -81,7 +83,7 @@ struct RIFFHeader {
   uint32_t file_size;    // size of file - 8
 };
 
-struct WAVHeader {
+struct WAVEHeader {
   uint32_t wave_magic;   // 0x57415645 big-endian ('WAVE')
   uint32_t fmt_magic;    // 0x666d7420
   uint32_t fmt_size;     // 16
@@ -98,6 +100,26 @@ struct RIFFChunkHeader {
   uint32_t size;
 };
 
+struct SampleChunkHeader {
+  uint32_t manufacturer;
+  uint32_t product;
+  uint32_t sample_period;
+  uint32_t base_note;
+  uint32_t pitch_fraction;
+  uint32_t smtpe_format;
+  uint32_t smtpe_offset;
+  uint32_t num_loops;
+  uint32_t sampler_data;
+
+  struct {
+    uint32_t loop_cue_point_id; // can be zero? we'll only have at most one loop in this context
+    uint32_t loop_type; // 0 = normal, 1 = ping-pong, 2 = reverse
+    uint32_t loop_start; // start and end are byte offsets into the wave data, not sample indexes
+    uint32_t loop_end;
+    uint32_t loop_fraction; // fraction of a sample to loop (0)
+    uint32_t loop_play_count; // 0 = loop forever
+  } loops[0];
+};
 
 
 WAVContents load_wav(const char* filename) {
@@ -119,7 +141,7 @@ WAVContents load_wav(FILE* f) {
   WAVContents contents;
 
   // iterate over the chunks
-  WAVHeader wav;
+  WAVEHeader wav;
   wav.wave_magic = 0;
   for (;;) {
     RIFFChunkHeader chunk_header;
@@ -128,7 +150,7 @@ WAVContents load_wav(FILE* f) {
     if (chunk_header.magic == 0x45564157) { // 'WAVE'
       memcpy(&wav, &chunk_header, sizeof(RIFFChunkHeader));
       freadx(f, reinterpret_cast<uint8_t*>(&wav) + sizeof(RIFFChunkHeader),
-          sizeof(WAVHeader) - sizeof(RIFFChunkHeader));
+          sizeof(WAVEHeader) - sizeof(RIFFChunkHeader));
 
       // check the header info. we only support 1-channel, 16-bit sounds for now
       if (wav.wave_magic != 0x45564157) { // 'WAVE'
@@ -143,6 +165,24 @@ WAVContents load_wav(FILE* f) {
 
       contents.sample_rate = wav.sample_rate;
       contents.num_channels = wav.num_channels;
+
+    } else if (chunk_header.magic == 0x6C706D73) { // 'smpl'
+      const string data = freadx(f, chunk_header.size);
+      const SampleChunkHeader* sample_header = reinterpret_cast<const SampleChunkHeader*>(data.data());
+      const char* last_loop_ptr = data.data() + data.size() - sizeof(sample_header->loops[0]);
+
+      contents.base_note = sample_header->base_note;
+      contents.loops.resize(sample_header->num_loops);
+      for (size_t x = 0; x < sample_header->num_loops; x++) {
+        auto& contents_loop = contents.loops[x];
+        auto* header_loop = &sample_header->loops[x];
+        if (reinterpret_cast<const char*>(header_loop) > last_loop_ptr) {
+          throw runtime_error("sound has malformed loop information");
+        }
+        contents_loop.start = header_loop->loop_start;
+        contents_loop.end = sample_header->loops[x].loop_end;
+        contents_loop.type = sample_header->loops[x].loop_type;
+      }
 
     } else if (chunk_header.magic == 0x61746164) { // 'data'
       if (wav.wave_magic == 0) {

@@ -4,10 +4,20 @@
 #include <vector>
 
 
+struct WAVLoop {
+  size_t start;
+  size_t end;
+  uint8_t type;
+};
+
 struct WAVContents {
   std::vector<float> samples;
   size_t num_channels;
   size_t sample_rate;
+  int64_t base_note; // -1 if not specified
+  std::vector<WAVLoop> loops;
+
+  WAVContents();
 
   float seconds() const;
 };
