@@ -51,6 +51,8 @@ SampledSound::SampledSound(const char* filename) : Sound(0) {
   this->create_al_objects();
 }
 
+SampledSound::SampledSound(const string& filename) : SampledSound(filename.c_str()) { }
+
 SampledSound::SampledSound(FILE* f) : Sound(0) {
   auto wav = load_wav(f);
   this->sample_rate = wav.sample_rate;

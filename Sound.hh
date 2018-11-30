@@ -30,6 +30,7 @@ protected:
 class SampledSound : public Sound {
 public:
   explicit SampledSound(const char* filename);
+  explicit SampledSound(const std::string& filename);
   explicit SampledSound(FILE* f);
   virtual ~SampledSound() = default;
 };
