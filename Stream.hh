@@ -1,3 +1,5 @@
+#pragma once
+
 #include "Constants.hh"
 
 #include <string>

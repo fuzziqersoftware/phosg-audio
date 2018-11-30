@@ -1,3 +1,5 @@
+#pragma once
+
 #ifdef MACOSX
 #include <OpenAL/al.h>
 #include <OpenAL/alc.h>
