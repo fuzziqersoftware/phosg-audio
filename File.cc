@@ -55,6 +55,14 @@ struct SaveWAVHeader {
   }
 };
 
+void save_wav(const char* filename, const vector<uint8_t>& samples,
+    size_t sample_rate, size_t num_channels) {
+  SaveWAVHeader header(samples.size(), num_channels, sample_rate, 8, false);
+  auto f = fopen_unique(filename, "wb");
+  fwrite(&header, sizeof(SaveWAVHeader), 1, f.get());
+  fwrite(samples.data(), sizeof(uint8_t), samples.size(), f.get());
+}
+
 void save_wav(const char* filename, const vector<int16_t>& samples,
     size_t sample_rate, size_t num_channels) {
   SaveWAVHeader header(samples.size(), num_channels, sample_rate, 16, false);

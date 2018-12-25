@@ -27,6 +27,8 @@ struct WAVContents {
 WAVContents load_wav(const char* filename);
 WAVContents load_wav(FILE* f);
 
+void save_wav(const char* filename, const std::vector<uint8_t>& samples,
+    size_t sample_rate, size_t num_channels);
 void save_wav(const char* filename, const std::vector<int16_t>& samples,
     size_t sample_rate, size_t num_channels);
 void save_wav(const char* filename, const std::vector<float>& samples,
