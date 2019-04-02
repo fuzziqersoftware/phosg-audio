@@ -1,6 +1,7 @@
 #include "Sound.hh"
 
 #include <inttypes.h>
+#include <math.h>
 
 #include <phosg/Filesystem.hh>
 #include <phosg/Strings.hh>
@@ -179,8 +180,8 @@ SplitNoise::SplitNoise(int split_distance, float seconds, float volume,
       continue;
     }
 
-    int first_x = (x / split_distance) * split_distance;
-    int second_x = first_x + split_distance;
+    size_t first_x = (x / split_distance) * split_distance;
+    size_t second_x = first_x + split_distance;
     float x1p = (float)(x - first_x) / (second_x - first_x);
     if (second_x >= this->samples.size()) {
       this->samples[x] = 0;

@@ -1,7 +1,11 @@
 #include "Constants.hh"
 
 #include <errno.h>
+#include <stdlib.h>
+#include <string.h>
 #include <phosg/Encoding.hh>
+
+#include <stdexcept>
 
 using namespace std;
 
@@ -100,9 +104,8 @@ int format_for_name(const char* format) {
     return AL_FORMAT_MONO16;
   } else if (!strcmp(format, "stereo-i16")) {
     return AL_FORMAT_STEREO16;
-  } else {
-    throw out_of_range("unknown format");
   }
+  throw out_of_range("unknown format");
 }
 
 uint8_t note_for_name(const char* name) {

@@ -24,7 +24,7 @@ size_t AudioCapture::get_samples(void* buffer, size_t sample_count) {
   int samples_available;
   alcGetIntegerv(this->device, ALC_CAPTURE_SAMPLES, sizeof(ALint),
       &samples_available);
-  if (sample_count > samples_available) {
+  if (sample_count > static_cast<size_t>(samples_available)) {
     sample_count = samples_available;
   }
   al_check_error();

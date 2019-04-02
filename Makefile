@@ -6,11 +6,13 @@ LDFLAGS=-g -std=c++14 -lstdc++
 ifeq ($(shell uname -s),Darwin)
 	INSTALL_DIR=/opt/local
 	CXXFLAGS += -I/opt/local/include -DMACOSX -mmacosx-version-min=10.11
-	LDFLAGS += -L/opt/local/lib -mmacosx-version-min=10.11
+	LDFLAGS += -L/opt/local/lib -mmacosx-version-min=10.11 
+	LIBS = -lphosg -lpthread -framework OpenAL
 else
 	INSTALL_DIR=/usr/local
 	CXXFLAGS += -I/usr/local/include -DLINUX
-	LDFLAGS += -L/opt/local/lib -pthread
+	LDFLAGS += -L/opt/local/lib 
+	LIBS = -lphosg -lpthread -lopenal
 endif
 
 all: libphosg-audio.a audiocat
@@ -26,7 +28,7 @@ libphosg-audio.a: $(OBJECTS)
 	ar rcs libphosg-audio.a $(OBJECTS)
 
 audiocat: $(OBJECTS) Audiocat.o
-	$(CXX) $(LDFLAGS) -lphosg -framework OpenAL $^ -o $@
+	$(CXX) $(LDFLAGS) $^ $(LIBS) -o $@
 
 clean:
 	rm -rf *.dSYM *.o gmon.out libphosg-audio.a audiocat

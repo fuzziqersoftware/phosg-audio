@@ -4,3 +4,5 @@ Building & installing:
 0. Make sure you have Make, g++ and Python installed.
 1. `make`
 2. `sudo make install`
+
+Tested on Mac OS and Ubuntu, and probably works on many other flavors of Linux.
