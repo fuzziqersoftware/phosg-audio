@@ -8,6 +8,8 @@
 
 
 
+#ifndef WINDOWS
+
 class AudioStream {
 public:
   AudioStream(int sample_rate, int format, size_t num_buffers = 16);
@@ -34,3 +36,5 @@ private:
   std::unordered_map<ALuint, std::string> buffer_id_to_data;
   ALuint source_id;
 };
+
+#endif

@@ -1,11 +1,13 @@
 #pragma once
 
+#ifndef WINDOWS
 #ifdef MACOSX
 #include <OpenAL/al.h>
 #include <OpenAL/alc.h>
 #else
 #include <AL/al.h>
 #include <AL/alc.h>
+#endif
 #endif
 
 #include <stdint.h>
@@ -14,6 +16,9 @@
 
 #include <vector>
 
+
+
+#ifndef WINDOWS
 
 void init_al();
 void exit_al();
@@ -28,6 +33,17 @@ const char* al_err_str(ALenum err);
 
 #define al_check_error() \
     __al_check_error(__FILE__, __LINE__)
+
+#else
+
+#define AL_FORMAT_MONO_FLOAT32    0
+#define AL_FORMAT_STEREO_FLOAT32  1
+#define AL_FORMAT_MONO8           2
+#define AL_FORMAT_STEREO8         3
+#define AL_FORMAT_MONO16          4
+#define AL_FORMAT_STEREO16        5
+
+#endif
 
 bool is_16bit(int format);
 bool is_32bit(int format);

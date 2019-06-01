@@ -13,8 +13,10 @@ using namespace std;
 
 
 
-Sound::Sound(uint32_t sample_rate) : sample_rate(sample_rate), buffer_id(0),
-    source_id(0) { }
+#ifndef WINDOWS
+
+Sound::Sound(uint32_t sample_rate) : buffer_id(0), source_id(0),
+    sample_rate(sample_rate) { }
 
 Sound::~Sound() {
   if (this->source_id) {
@@ -24,6 +26,26 @@ Sound::~Sound() {
     alDeleteBuffers(1, &this->buffer_id);
   }
 }
+
+#else // WINDOWS
+
+Sound::Sound(uint32_t sample_rate) : sample_rate(sample_rate) { }
+Sound::~Sound() { }
+
+#endif
+
+void Sound::print(FILE* stream) const {
+  for (size_t x = 0; x < this->samples.size(); x++) {
+    fprintf(stream, "%zu: %g\n", x, this->samples[x]);
+  }
+}
+
+void Sound::write(FILE* stream) const {
+  fwrite(this->samples.data(), sizeof(this->samples[0]), this->samples.size(),
+      stream);
+}
+
+#ifndef WINDOWS
 
 void Sound::play() {
   alSourcePlay(this->source_id);
@@ -43,13 +65,17 @@ void Sound::create_al_objects() {
   al_check_error();
 }
 
+#endif
+
 
 
 SampledSound::SampledSound(const char* filename) : Sound(0) {
   auto wav = load_wav(filename);
   this->sample_rate = wav.sample_rate;
   this->samples = move(wav.samples);
+#ifndef WINDOWS
   this->create_al_objects();
+#endif
 }
 
 SampledSound::SampledSound(const string& filename) : SampledSound(filename.c_str()) { }
@@ -58,7 +84,9 @@ SampledSound::SampledSound(FILE* f) : Sound(0) {
   auto wav = load_wav(f);
   this->sample_rate = wav.sample_rate;
   this->samples = move(wav.samples);
+#ifndef WINDOWS
   this->create_al_objects();
+#endif
 }
 
 
@@ -66,32 +94,7 @@ SampledSound::SampledSound(FILE* f) : Sound(0) {
 GeneratedSound::GeneratedSound(float seconds, float volume,
     uint32_t sample_rate) : Sound(sample_rate), seconds(seconds),
     volume(volume) {
-
-  alGenBuffers(1, &this->buffer_id);
-  al_check_error();
-
   this->samples.resize(this->seconds * this->sample_rate);
-}
-
-void GeneratedSound::fill_buffer_repeat(size_t num_samples_written) {
-  for (size_t x = num_samples_written; x < this->samples.size(); x++) {
-    this->samples[x] = this->samples[x % num_samples_written];
-  }
-}
-
-void GeneratedSound::play() const {
-  alSourcePlay(this->source_id);
-}
-
-void GeneratedSound::print(FILE* stream) const {
-  for (size_t x = 0; x < this->samples.size(); x++) {
-    fprintf(stream, "%zu: %g\n", x, this->samples[x]);
-  }
-}
-
-void GeneratedSound::write(FILE* stream) const {
-  fwrite(this->samples.data(), sizeof(this->samples[0]), this->samples.size(),
-      stream);
 }
 
 
@@ -100,9 +103,11 @@ SineWave::SineWave(float frequency, float seconds, float volume,
     uint32_t sample_rate) : GeneratedSound(seconds, volume, sample_rate),
     frequency(frequency) {
   for (size_t x = 0; x < this->samples.size(); x++) {
-    this->samples[x] = sin((2.0f * M_PI * this->frequency) / this->sample_rate * x) * this->volume;
+    this->samples[x] = sin((6.283185307179586 * this->frequency) / this->sample_rate * x) * this->volume;
   }
+#ifndef WINDOWS
   this->create_al_objects();
+#endif
 }
 
 
@@ -117,7 +122,9 @@ SquareWave::SquareWave(float frequency, float seconds, float volume,
       this->samples[x] = -this->volume;
     }
   }
+#ifndef WINDOWS
   this->create_al_objects();
+#endif
 }
 
 
@@ -137,7 +144,9 @@ TriangleWave::TriangleWave(float frequency, float seconds, float volume,
       this->samples[x] = (-1 + 2 * factor) * this->volume;
     }
   }
+#ifndef WINDOWS
   this->create_al_objects();
+#endif
 }
 
 
@@ -151,7 +160,9 @@ FrontTriangleWave::FrontTriangleWave(float frequency, float seconds,
     // up-slope; linear from -1 -> 1
     this->samples[x] = (-1 + 2 * factor) * this->volume;
   }
+#ifndef WINDOWS
   this->create_al_objects();
+#endif
 }
 
 
@@ -161,7 +172,9 @@ WhiteNoise::WhiteNoise(float seconds, float volume, uint32_t sample_rate) :
   for (size_t x = 0; x < this->samples.size(); x++) {
     this->samples[x] = (static_cast<float>(rand() * 2) / RAND_MAX) - 1.0;
   }
+#ifndef WINDOWS
   this->create_al_objects();
+#endif
 }
 
 
@@ -196,5 +209,7 @@ SplitNoise::SplitNoise(int split_distance, float seconds, float volume,
       this->samples[x] *= (float)(this->samples.size() - x) / this->samples.size();
     }
   }
+#ifndef WINDOWS
   this->create_al_objects();
+#endif
 }

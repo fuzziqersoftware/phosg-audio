@@ -10,24 +10,31 @@ class Sound {
 public:
   virtual ~Sound();
 
+  void print(FILE* stream) const;
+  void write(FILE* stream) const;
+
+#ifndef WINDOWS
   void play();
+#endif
 
 protected:
   explicit Sound(uint32_t sample_rate);
 
-  // these are deleted because I'm lazy
+  // these are deleted because I'm lazy. default copy/move constructors are bad
+  // here because of the AL objects
   Sound(const Sound&) = delete;
   Sound(Sound&&) = delete;
   Sound& operator=(const Sound&) = delete;
   Sound& operator=(Sound&&) = delete;
 
+#ifndef WINDOWS
   void create_al_objects();
-
-  uint32_t sample_rate;
 
   ALuint buffer_id;
   ALuint source_id;
+#endif
 
+  uint32_t sample_rate;
   std::vector<float> samples;
 };
 
@@ -43,17 +50,9 @@ class GeneratedSound : public Sound {
 public:
   virtual ~GeneratedSound() = default;
 
-  void play() const;
-  void print(FILE* stream) const;
-  void write(FILE* stream) const;
-
-  void wait() const;
-
 protected:
   explicit GeneratedSound(float seconds, float volume = 1.0,
       uint32_t sample_rate = 44100);
-
-  void fill_buffer_repeat(size_t num_samples);
 
   float seconds;
   float volume;

@@ -12,6 +12,12 @@ using namespace std;
 
 
 
+#ifdef WINDOWS
+#define PRIX32 "X"
+#endif
+
+
+
 WAVContents::WAVContents() : num_channels(0), sample_rate(0), base_note(-1) { }
 
 float WAVContents::seconds() const {
@@ -169,7 +175,7 @@ WAVContents load_wav(FILE* f) {
         throw runtime_error(string_printf("sound has incorrect fmt_magic (%" PRIX32 ")", wav.fmt_magic));
       }
       if (wav.num_channels > 2) {
-        throw runtime_error(string_printf("sound has too many channels (%" PRIu16 ")", wav.num_channels));
+        throw runtime_error(string_printf("sound has too many channels (%hu)", wav.num_channels));
       }
 
       contents.sample_rate = wav.sample_rate;
@@ -228,7 +234,7 @@ WAVContents load_wav(FILE* f) {
           contents.samples[x] = (static_cast<float>(int_samples[x]) / 128.0f) - 1.0f;
         }
       } else {
-        throw runtime_error("sample width is not supported (format=%" PRIu16 ", bits_per_sample=%" PRIu16 ")");
+        throw runtime_error("sample width is not supported (format=%hu, bits_per_sample=%hu)");
       }
 
       break;
