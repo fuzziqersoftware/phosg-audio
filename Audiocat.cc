@@ -5,11 +5,13 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#include <complex>
 #include <memory>
 #include <phosg/Encoding.hh>
 
 #include "Constants.hh"
 #include "Capture.hh"
+#include "FourierTransform.hh"
 #include "Sound.hh"
 #include "Stream.hh"
 
@@ -63,8 +65,22 @@ Options:\n\
   --duration=DURATION\n\
       Listen or generate sound for this many seconds. No effect when playing;\n\
       audiocat will always play all data from stdin.\n\
+  --output-format=DISPLAY-FORMAT\n\
+      When listening, output captured audio in this format. Valid formats are\n\
+      binary (default), text, and fourier-histogram.\n\
+  --fourier-width=WIDTH\n\
+      With the fourier-histogram output format, set the number of samples to\n\
+      transform on each line of output (must be a power of 2; default 4096).\n\
 ");
 }
+
+
+
+enum class OutputFormat {
+  Binary = 0,
+  Text,
+  FFTHistogram,
+};
 
 
 
@@ -79,8 +95,10 @@ int main(int argc, char* argv[]) {
   double duration = 0.0; // indefinite
   size_t buffer_limit = 2048;
   size_t buffer_count = 4;
+  size_t fourier_width = 4096;
   bool reverse_endian = false;
   const char* format_name = "mono-i16";
+  OutputFormat output_format;
   for (int x = 1; x < argc; x++) {
     if (!strcmp(argv[x], "--verbose")) {
       verbose = true;
@@ -96,6 +114,14 @@ int main(int argc, char* argv[]) {
       sample_rate = atoi(&argv[x][14]);
     } else if (!strncmp(argv[x], "--format=", 9)) {
       format_name = &argv[x][9];
+    } else if (!strcmp(argv[x], "--output-format=binary")) {
+      output_format = OutputFormat::Binary;
+    } else if (!strcmp(argv[x], "--output-format=text")) {
+      output_format = OutputFormat::Text;
+    } else if (!strcmp(argv[x], "--output-format=fourier-histogram")) {
+      output_format = OutputFormat::FFTHistogram;
+    } else if (!strncmp(argv[x], "--fourier-width=", 16)) {
+      fourier_width = strtoull(&argv[x][16], NULL, 0);
     } else if (!strcmp(argv[x], "--reverse-endian")) {
       reverse_endian = true;
     } else if (!strncmp(argv[x], "--wave=", 7)) {
@@ -107,6 +133,9 @@ int main(int argc, char* argv[]) {
       frequency = frequency_for_note(note);
     } else if (!strncmp(argv[x], "--duration=", 11)) {
       duration = atof(&argv[x][11]);
+    } else {
+      fprintf(stderr, "unrecognized option: %s\n", argv[x]);
+      return 1;
     }
   }
 
@@ -115,8 +144,6 @@ int main(int argc, char* argv[]) {
   int format = format_for_name(format_name);
 
   if (listen) {
-    size_t sample_limit = duration * sample_rate;
-    void* buffer = malloc(bytes_per_sample(format) * sample_rate);
     size_t samples_captured = 0;
     {
       if (verbose) {
@@ -129,21 +156,74 @@ int main(int argc, char* argv[]) {
         }
       }
       AudioCapture cap(NULL, sample_rate, format, sample_rate);
-
       size_t bps = bytes_per_sample(format);
-      while (!sample_limit || (samples_captured < sample_limit)) {
-        usleep(10000);
-        size_t samples_this_period = sample_limit ? (sample_limit - samples_captured) : sample_rate;
-        size_t sample_count = cap.get_samples(buffer, samples_this_period);
-        if (reverse_endian) {
-          byteswap_samples(buffer, sample_count, format);
+
+      size_t sample_limit = duration * sample_rate;
+      if (output_format == OutputFormat::FFTHistogram) {
+        const size_t fourier_width = 4096; // TODO: make this configurable
+        void* buffer = malloc(bytes_per_sample(format) * fourier_width);
+        while (!sample_limit || (samples_captured < sample_limit)) {
+          size_t sample_count = cap.get_samples(buffer, fourier_width, true);
+          if (sample_count != fourier_width) {
+            fprintf(stderr, "expected %zu samples, got %zu\n", fourier_width, sample_count);
+            throw logic_error("blocking read did not produce enough data");
+          }
+          vector<complex<double>> samples_complex = make_complex_multi(
+              reinterpret_cast<const float*>(buffer), fourier_width);
+          auto fourier_ret = compute_fourier_transform(samples_complex);
+
+          size_t compress_factor = 21;
+          size_t cell_count = (fourier_width / compress_factor) + ((fourier_width % compress_factor) ? 1 : 0);
+
+          // note: this is actually the squared magnitude
+          float max_intensity = 0.0;
+          vector<float> cell_intensity(cell_count, 0.0);
+          for (size_t x = 0; x < fourier_ret.size(); x++) {
+            float& cell = cell_intensity[x / compress_factor];
+            cell += sqrt(norm(fourier_ret[x]));
+            if (cell > max_intensity) {
+              max_intensity = cell;
+            }
+          }
+
+          string line_data(cell_count, ' ');
+          const string intensity_chars(" .:+*#@");
+          for (size_t x = 0; x < cell_intensity.size(); x++) {
+            // intentional float truncation
+            size_t intensity_class = cell_intensity[x] / max_intensity * intensity_chars.size();
+            if (intensity_class >= intensity_chars.size()) {
+              intensity_class = intensity_chars.size() - 1;
+            }
+            line_data[x] = intensity_chars[intensity_class];
+          }
+
+          fprintf(stdout, "%s\n", line_data.c_str());
+          fflush(stdout);
+
+          samples_captured += fourier_width;
         }
-        fwrite(buffer, 1, bps * sample_count, stdout);
-        fflush(stdout);
-        samples_captured += sample_count;
+        free(buffer);
+
+      } else {
+        void* buffer = malloc(bytes_per_sample(format) * sample_rate);
+        while (!sample_limit || (samples_captured < sample_limit)) {
+          usleep(10000);
+          size_t samples_this_period = sample_limit ? (sample_limit - samples_captured) : sample_rate;
+          size_t sample_count = cap.get_samples(buffer, samples_this_period);
+          if (reverse_endian) {
+            byteswap_samples(buffer, sample_count, format);
+          }
+          if (output_format == OutputFormat::Binary) {
+            fwrite(buffer, 1, bps * sample_count, stdout);
+            fflush(stdout);
+          } else {
+            throw logic_error("text output not implemented");
+          }
+          samples_captured += sample_count;
+        }
+        free(buffer);
       }
     }
-    free(buffer);
 
     if (verbose) {
       fprintf(stderr, "(done) listening for %g seconds of %s data at %d kHz, writing to stdout\n",
