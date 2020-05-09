@@ -51,6 +51,10 @@ void Sound::play() {
   alSourcePlay(this->source_id);
 }
 
+void Sound::set_volume(float volume) {
+  alSourcef(this->source_id, AL_GAIN, volume);
+}
+
 void Sound::create_al_objects() {
   alGenBuffers(1, &this->buffer_id);
   al_check_error();

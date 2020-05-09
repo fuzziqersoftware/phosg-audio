@@ -4,6 +4,10 @@ using namespace std;
 
 
 
+const double pi = 3.14159265358979323846;
+
+
+
 vector<complex<double>> make_complex_multi(const vector<float>& input) {
   return make_complex_multi(input.data(), input.size());
 }
@@ -39,7 +43,7 @@ void compute_fourier_transform_recursive(const vector<complex<double>>& input,
   // TODO: precompute the roots of unity to make this faster
   for (size_t z = 0; z < input_count / 2; z++) {
     size_t index = z + output_start_index;
-    complex<double> v = polar(1.0, (-2.0 * M_PI * z) / input_count) * output[index + half_count];
+    complex<double> v = polar(1.0, (-2.0 * pi * z) / input_count) * output[index + half_count];
     complex<double> t = output[index];
     output[index] = t + v;
     output[index + half_count] = t - v;

@@ -15,6 +15,7 @@ public:
 
 #ifndef WINDOWS
   void play();
+  void set_volume(float volume);
 #endif
 
 protected:
