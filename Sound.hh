@@ -13,10 +13,8 @@ public:
   void print(FILE* stream) const;
   void write(FILE* stream) const;
 
-#ifndef WINDOWS
   void play();
   void set_volume(float volume);
-#endif
 
 protected:
   explicit Sound(uint32_t sample_rate);
@@ -28,12 +26,10 @@ protected:
   Sound& operator=(const Sound&) = delete;
   Sound& operator=(Sound&&) = delete;
 
-#ifndef WINDOWS
   void create_al_objects();
 
   ALuint buffer_id;
   ALuint source_id;
-#endif
 
   uint32_t sample_rate;
   std::vector<float> samples;

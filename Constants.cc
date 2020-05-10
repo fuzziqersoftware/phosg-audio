@@ -10,13 +10,6 @@
 using namespace std;
 
 
-#ifdef WINDOWS
-
-static int mono_float32_format = AL_FORMAT_MONO_FLOAT32;
-static int stereo_float32_format = AL_FORMAT_STEREO_FLOAT32;
-
-#else  // not WINDOWS
-
 static int mono_float32_format = 0;
 static int stereo_float32_format = 0;
 
@@ -57,8 +50,6 @@ const char* al_err_str(ALenum err) {
   }
   return "unknown";
 }
-
-#endif
 
 bool is_16bit(int format) {
   return (format == AL_FORMAT_MONO16) || (format == AL_FORMAT_STEREO16);

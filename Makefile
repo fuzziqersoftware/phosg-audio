@@ -1,17 +1,25 @@
 OBJECTS=Constants.o File.o Capture.o Sound.o Stream.o FourierTransform.o
 CXX=g++ -fPIC
-CXXFLAGS=-std=c++14 -g -DHAVE_INTTYPES_H -DHAVE_NETINET_IN_H -Wall -Werror -IX:\\
+CXXFLAGS=-std=c++14 -g -DHAVE_INTTYPES_H -DHAVE_NETINET_IN_H -Wall -Werror
 LDFLAGS=-g -std=c++14 -lstdc++
 
 ALL_TARGETS=libphosg-audio.a
 
 ifeq ($(OS),Windows_NT)
-	# INSTALL_DIR not set because we don't support installing on windows. also,
-	# we expect gcc and whatnot to be on PATH; probably the user has to set this
-	# up manually but w/e
-	CXXFLAGS +=  -DWINDOWS -D__USE_MINGW_ANSI_STDIO=1
+	# setting up the windows build is very tedious. sorry about this, but I don't
+	# write code for windows usually and I don't use visual studio, so most of the
+	# default development path stuff doesn't work here.
+	#
+	# to build for windows, download openal-soft and phosg and extract them
+	# somewhere. set the following paths to the places where you extracted them -
+	# OPENAL_SOFT_DIR should point to a directory that has an include/
+	# subdirectory, but PHOSG_DIR should point to the enclosing directory (that
+	# has a phosg/ subdirectory).
+	OPENAL_SOFT_DIR = X:\\phosg-audio\\windows-deps\\openal-soft-1.20.1-bin
+	PHOSG_DIR = X:\\
+	CXXFLAGS +=  -DWINDOWS -D__USE_MINGW_ANSI_STDIO=1 -I$(OPENAL_SOFT_DIR)\\include -I$(PHOSG_DIR)
 
-	RM=del /S
+	RM=rm -rf
 	EXE_EXTENSION=.exe
 else
 	RM=rm -rf

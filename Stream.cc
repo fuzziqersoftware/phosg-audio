@@ -6,8 +6,6 @@ using namespace std;
 
 
 
-#ifndef WINDOWS
-
 AudioStream::AudioStream(int sample_rate, int format, size_t num_buffers) :
     sample_rate(sample_rate), format(format), all_buffer_ids(num_buffers) {
   alGenBuffers(this->all_buffer_ids.size(), this->all_buffer_ids.data());
@@ -99,5 +97,3 @@ void AudioStream::wait_for_buffers(size_t num_buffers) {
     usleep(1000);
   }
 }
-
-#endif

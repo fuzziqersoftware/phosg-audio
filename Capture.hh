@@ -4,8 +4,6 @@
 
 
 
-#ifndef WINDOWS
-
 class AudioCapture {
 public:
   AudioCapture(const char* device_name, int sample_rate, int format,
@@ -22,5 +20,3 @@ private:
   ALCdevice* device;
   int format;
 };
-
-#endif

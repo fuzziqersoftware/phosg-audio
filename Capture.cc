@@ -6,8 +6,6 @@ using namespace std;
 
 
 
-#ifndef WINDOWS
-
 AudioCapture::AudioCapture(const char* device_name, int sample_rate, int format,
     int buffer_size) : format(format) {
   this->device = alcCaptureOpenDevice(device_name, sample_rate, format,
@@ -49,5 +47,3 @@ size_t AudioCapture::get_samples(void* buffer, size_t sample_count, bool wait) {
   } while (wait && sample_count);
   return samples_read;
 }
-
-#endif

@@ -13,8 +13,6 @@ using namespace std;
 
 
 
-#ifndef WINDOWS
-
 Sound::Sound(uint32_t sample_rate) : buffer_id(0), source_id(0),
     sample_rate(sample_rate) { }
 
@@ -27,13 +25,6 @@ Sound::~Sound() {
   }
 }
 
-#else // WINDOWS
-
-Sound::Sound(uint32_t sample_rate) : sample_rate(sample_rate) { }
-Sound::~Sound() { }
-
-#endif
-
 void Sound::print(FILE* stream) const {
   for (size_t x = 0; x < this->samples.size(); x++) {
     fprintf(stream, "%zu: %g\n", x, this->samples[x]);
@@ -44,8 +35,6 @@ void Sound::write(FILE* stream) const {
   fwrite(this->samples.data(), sizeof(this->samples[0]), this->samples.size(),
       stream);
 }
-
-#ifndef WINDOWS
 
 void Sound::play() {
   alSourcePlay(this->source_id);
@@ -59,9 +48,16 @@ void Sound::create_al_objects() {
   alGenBuffers(1, &this->buffer_id);
   al_check_error();
 
+  // windows openal doesn't support float32 format, so use int16 instead
+#ifdef WINDOWS
+  auto int_samples = convert_samples_to_int(this->samples);
+  alBufferData(this->buffer_id, AL_FORMAT_MONO16, int_samples.data(),
+      int_samples.size() * sizeof(int16_t), this->sample_rate);
+#else // not windows
   alBufferData(this->buffer_id, alGetEnumValue("AL_FORMAT_MONO_FLOAT32"),
       this->samples.data(), this->samples.size() * sizeof(float),
       this->sample_rate);
+#endif
   al_check_error();
 
   alGenSources(1, &this->source_id);
@@ -69,17 +65,13 @@ void Sound::create_al_objects() {
   al_check_error();
 }
 
-#endif
-
 
 
 SampledSound::SampledSound(const char* filename) : Sound(0) {
   auto wav = load_wav(filename);
   this->sample_rate = wav.sample_rate;
   this->samples = move(wav.samples);
-#ifndef WINDOWS
   this->create_al_objects();
-#endif
 }
 
 SampledSound::SampledSound(const string& filename) : SampledSound(filename.c_str()) { }
@@ -88,9 +80,7 @@ SampledSound::SampledSound(FILE* f) : Sound(0) {
   auto wav = load_wav(f);
   this->sample_rate = wav.sample_rate;
   this->samples = move(wav.samples);
-#ifndef WINDOWS
   this->create_al_objects();
-#endif
 }
 
 
@@ -109,9 +99,7 @@ SineWave::SineWave(float frequency, float seconds, float volume,
   for (size_t x = 0; x < this->samples.size(); x++) {
     this->samples[x] = sin((6.283185307179586 * this->frequency) / this->sample_rate * x) * this->volume;
   }
-#ifndef WINDOWS
   this->create_al_objects();
-#endif
 }
 
 
@@ -126,9 +114,7 @@ SquareWave::SquareWave(float frequency, float seconds, float volume,
       this->samples[x] = -this->volume;
     }
   }
-#ifndef WINDOWS
   this->create_al_objects();
-#endif
 }
 
 
@@ -148,9 +134,7 @@ TriangleWave::TriangleWave(float frequency, float seconds, float volume,
       this->samples[x] = (-1 + 2 * factor) * this->volume;
     }
   }
-#ifndef WINDOWS
   this->create_al_objects();
-#endif
 }
 
 
@@ -164,9 +148,7 @@ FrontTriangleWave::FrontTriangleWave(float frequency, float seconds,
     // up-slope; linear from -1 -> 1
     this->samples[x] = (-1 + 2 * factor) * this->volume;
   }
-#ifndef WINDOWS
   this->create_al_objects();
-#endif
 }
 
 
@@ -176,9 +158,7 @@ WhiteNoise::WhiteNoise(float seconds, float volume, uint32_t sample_rate) :
   for (size_t x = 0; x < this->samples.size(); x++) {
     this->samples[x] = (static_cast<float>(rand() * 2) / RAND_MAX) - 1.0;
   }
-#ifndef WINDOWS
   this->create_al_objects();
-#endif
 }
 
 
@@ -213,7 +193,5 @@ SplitNoise::SplitNoise(int split_distance, float seconds, float volume,
       this->samples[x] *= (float)(this->samples.size() - x) / this->samples.size();
     }
   }
-#ifndef WINDOWS
   this->create_al_objects();
-#endif
 }

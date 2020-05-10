@@ -1,3 +1,5 @@
+#define __STDC_FORMAT_MACROS
+
 #include "File.hh"
 
 #include <inttypes.h>
@@ -9,12 +11,6 @@
 #include <vector>
 
 using namespace std;
-
-
-
-#ifdef WINDOWS
-#define PRIX32 "X"
-#endif
 
 
 

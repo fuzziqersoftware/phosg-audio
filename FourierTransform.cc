@@ -4,7 +4,7 @@ using namespace std;
 
 
 
-const double pi = 3.14159265358979323846;
+static const double pi = 3.14159265358979323846;
 
 
 
