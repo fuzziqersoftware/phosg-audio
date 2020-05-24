@@ -13,10 +13,29 @@ using namespace std;
 static int mono_float32_format = 0;
 static int stereo_float32_format = 0;
 
-void init_al() {
-  const char *defname = alcGetString(NULL, ALC_DEFAULT_DEVICE_SPECIFIER);
+set<string> list_audio_device_names() {
+  const char* devices = alcGetString(NULL, ALC_DEVICE_SPECIFIER);
 
-  ALCdevice* dev = alcOpenDevice(defname);
+  set<string> ret;
+  while (*devices) {
+    ret.emplace(devices);
+    devices += strlen(devices) + 1;
+  }
+  return ret;
+}
+
+std::string get_current_audio_device_name() {
+  ALCcontext* ctx = alcGetCurrentContext();
+  ALCdevice* dev = alcGetContextsDevice(ctx);
+  return alcGetString(dev, ALC_DEVICE_SPECIFIER);
+}
+
+void init_al(const char* device_name) {
+  if (device_name == NULL) {
+    device_name = alcGetString(NULL, ALC_DEFAULT_DEVICE_SPECIFIER);
+  }
+
+  ALCdevice* dev = alcOpenDevice(device_name);
   ALCcontext* ctx = alcCreateContext(dev, NULL);
   alcMakeContextCurrent(ctx);
 

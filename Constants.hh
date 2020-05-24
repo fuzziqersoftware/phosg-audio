@@ -13,10 +13,15 @@
 #include <sys/types.h>
 
 #include <vector>
+#include <set>
+#include <string>
 
 
 
-void init_al();
+std::set<std::string> list_audio_device_names();
+std::string get_current_audio_device_name();
+
+void init_al(const char* device_name = NULL);
 void exit_al();
 
 const char* al_err_str(ALenum err);
