@@ -160,7 +160,6 @@ int main(int argc, char* argv[]) {
 
       size_t sample_limit = duration * sample_rate;
       if (output_format == OutputFormat::FFTHistogram) {
-        const size_t fourier_width = 4096; // TODO: make this configurable
         void* buffer = malloc(bytes_per_sample(format) * fourier_width);
         while (!sample_limit || (samples_captured < sample_limit)) {
           size_t sample_count = cap.get_samples(buffer, fourier_width, true);
