@@ -1,4 +1,4 @@
-OBJECTS=Constants.o File.o Capture.o Sound.o Stream.o FourierTransform.o
+OBJECTS=Constants.o File.o Convert.o Capture.o Sound.o Stream.o FourierTransform.o
 CXX=g++ -fPIC
 CXXFLAGS=-std=c++14 -g -DHAVE_INTTYPES_H -DHAVE_NETINET_IN_H -Wall -Werror
 LDFLAGS=-g -std=c++14 -lstdc++

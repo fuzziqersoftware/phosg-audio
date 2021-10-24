@@ -48,7 +48,3 @@ uint8_t note_for_name(const char* name);
 const char* name_for_note(uint8_t note);
 
 double frequency_for_note(uint8_t note);
-
-void byteswap_samples(void* buffer, size_t sample_count, int format);
-std::vector<float> convert_samples_to_float(const std::vector<int16_t>&);
-std::vector<int16_t> convert_samples_to_int(const std::vector<float>&);

@@ -10,6 +10,7 @@
 #include <phosg/Encoding.hh>
 
 #include "Constants.hh"
+#include "Convert.hh"
 #include "Capture.hh"
 #include "FourierTransform.hh"
 #include "Sound.hh"
