@@ -23,11 +23,11 @@ float WAVContents::seconds() const {
 
 
 struct SaveWAVHeader {
-  uint32_t riff_magic;   // 0x52494646
+  uint32_t riff_magic;   // 0x52494646 ('RIFF')
   uint32_t file_size;    // size of file - 8
-  uint32_t wave_magic;   // 0x57415645
+  uint32_t wave_magic;   // 0x57415645 ('WAVE')
 
-  uint32_t fmt_magic;    // 0x666d7420
+  uint32_t fmt_magic;    // 0x666d7420 ('fmt ')
   uint32_t fmt_size;     // 16
   uint16_t format;       // 1 = PCM
   uint16_t num_channels;
@@ -36,7 +36,7 @@ struct SaveWAVHeader {
   uint16_t block_align;  // num_channels * bits_per_sample / 8
   uint16_t bits_per_sample;
 
-  uint32_t data_magic;   // 0x64617461
+  uint32_t data_magic;   // 0x64617461 (data)
   uint32_t data_size;    // num_samples * num_channels * bits_per_sample / 8
 
   SaveWAVHeader(uint32_t num_samples, uint16_t num_channels,
@@ -84,19 +84,19 @@ void save_wav(const char* filename, const vector<float>& samples,
 
 
 
-// note: this isn't the same as SaveWAVHeader; that structure is only used to
-// write wav files. when loading files, we might encounter chunks that this
-// program never creates by default, but we should be able to handle them
-// anyway, so the structure is split here
+// Note: this isn't the same as SaveWAVHeader; that structure is only used to
+// write files. When loading files, we might encounter chunks that this library
+// never creates by default, but we should be able to handle them anyway, so the
+// structure is split here.
 
 struct RIFFHeader {
-  uint32_t riff_magic;   // 0x52494646 big-endian ('RIFF')
+  uint32_t riff_magic;   // 0x52494646 ('RIFF')
   uint32_t file_size;    // size of file - 8
 };
 
 struct WAVEHeader {
-  uint32_t wave_magic;   // 0x57415645 big-endian ('WAVE')
-  uint32_t fmt_magic;    // 0x666d7420
+  uint32_t wave_magic;   // 0x57415645 ('WAVE')
+  uint32_t fmt_magic;    // 0x666d7420 ('fmt ')
   uint32_t fmt_size;     // 16
   uint16_t format;       // 1 = PCM, 3 = float
   uint16_t num_channels;
@@ -117,18 +117,18 @@ struct SampleChunkHeader {
   uint32_t sample_period;
   uint32_t base_note;
   uint32_t pitch_fraction;
-  uint32_t smtpe_format;
-  uint32_t smtpe_offset;
+  uint32_t smpte_format;
+  uint32_t smpte_offset;
   uint32_t num_loops;
   uint32_t sampler_data;
 
   struct {
-    uint32_t loop_cue_point_id; // can be zero? we'll only have at most one loop in this context
-    uint32_t loop_type; // 0 = normal, 1 = ping-pong, 2 = reverse
-    uint32_t loop_start; // start and end are byte offsets into the wave data, not sample indexes
-    uint32_t loop_end;
-    uint32_t loop_fraction; // fraction of a sample to loop (0)
-    uint32_t loop_play_count; // 0 = loop forever
+    uint32_t cue_point_id;
+    uint32_t type; // 0 = normal, 1 = ping-pong, 2 = reverse
+    uint32_t start; // byte offset into the wave data
+    uint32_t end; // byte offset into the wave data
+    uint32_t fraction; // fraction of a sample to loop
+    uint32_t play_count; // 0 = loop forever
   } loops[0];
 };
 
@@ -139,19 +139,18 @@ WAVContents load_wav(const char* filename) {
 }
 
 WAVContents load_wav(FILE* f) {
-  // check the RIFF header
-  uint32_t magic;
-  freadx(f, &magic, sizeof(uint32_t));
-  if (magic != 0x46464952) {
-    throw runtime_error(string_printf("unknown file format: %08" PRIX32, magic));
+  {
+    uint32_t magic;
+    freadx(f, &magic, sizeof(uint32_t));
+    if (magic != 0x46464952) { // 'RIFF'
+      throw runtime_error(string_printf("unknown file format: %08" PRIX32, magic));
+    }
   }
 
   uint32_t file_size;
   freadx(f, &file_size, sizeof(uint32_t));
 
   WAVContents contents;
-
-  // iterate over the chunks
   WAVEHeader wav;
   wav.wave_magic = 0;
   for (;;) {
@@ -163,15 +162,18 @@ WAVContents load_wav(FILE* f) {
       freadx(f, reinterpret_cast<uint8_t*>(&wav) + sizeof(RIFFChunkHeader),
           sizeof(WAVEHeader) - sizeof(RIFFChunkHeader));
 
-      // check the header info. we only support 1-channel, 16-bit sounds for now
       if (wav.wave_magic != 0x45564157) { // 'WAVE'
-        throw runtime_error(string_printf("sound has incorrect wave_magic (%" PRIX32 ")", wav.wave_magic));
+        throw runtime_error(string_printf(
+            "sound has incorrect wave_magic (%" PRIX32 ")", wav.wave_magic));
       }
       if (wav.fmt_magic != 0x20746D66) { // 'fmt '
-        throw runtime_error(string_printf("sound has incorrect fmt_magic (%" PRIX32 ")", wav.fmt_magic));
+        throw runtime_error(string_printf(
+            "sound has incorrect fmt_magic (%" PRIX32 ")", wav.fmt_magic));
       }
+      // We only support mono and stereo files for now
       if (wav.num_channels > 2) {
-        throw runtime_error(string_printf("sound has too many channels (%hu)", wav.num_channels));
+        throw runtime_error(string_printf(
+            "sound has too many channels (%hu)", wav.num_channels));
       }
 
       contents.sample_rate = wav.sample_rate;
@@ -183,8 +185,10 @@ WAVContents load_wav(FILE* f) {
       }
 
       const string data = freadx(f, chunk_header.size);
-      const SampleChunkHeader* sample_header = reinterpret_cast<const SampleChunkHeader*>(data.data());
-      const char* last_loop_ptr = data.data() + data.size() - sizeof(sample_header->loops[0]);
+      const SampleChunkHeader* sample_header =
+          reinterpret_cast<const SampleChunkHeader*>(data.data());
+      const char* last_loop_ptr =
+          data.data() + data.size() - sizeof(sample_header->loops[0]);
 
       contents.base_note = sample_header->base_note;
       contents.loops.resize(sample_header->num_loops);
@@ -194,9 +198,10 @@ WAVContents load_wav(FILE* f) {
         if (reinterpret_cast<const char*>(header_loop) > last_loop_ptr) {
           throw runtime_error("sound has malformed loop information");
         }
-        contents_loop.start = header_loop->loop_start / (wav.bits_per_sample >> 3);
-        contents_loop.end = header_loop->loop_end / (wav.bits_per_sample >> 3);
-        contents_loop.type = header_loop->loop_type;
+        // Convert the byte offsets to sample offsets
+        contents_loop.start = header_loop->start / (wav.bits_per_sample >> 3);
+        contents_loop.end = header_loop->end / (wav.bits_per_sample >> 3);
+        contents_loop.type = header_loop->type;
       }
 
     } else if (chunk_header.magic == 0x61746164) { // 'data'
@@ -208,7 +213,8 @@ WAVContents load_wav(FILE* f) {
 
       // 32-bit float
       if ((wav.format == 3) && (wav.bits_per_sample == 32)) {
-        freadx(f, contents.samples.data(), contents.samples.size() * sizeof(float));
+        freadx(f, contents.samples.data(),
+            contents.samples.size() * sizeof(float));
 
       // 16-bit signed int
       } else if ((wav.format == 1) && (wav.bits_per_sample == 16)) {
@@ -230,7 +236,9 @@ WAVContents load_wav(FILE* f) {
           contents.samples[x] = (static_cast<float>(int_samples[x]) / 128.0f) - 1.0f;
         }
       } else {
-        throw runtime_error("sample width is not supported (format=%hu, bits_per_sample=%hu)");
+        throw runtime_error(string_printf(
+            "sample width is not supported (format=%hu, bits_per_sample=%hu)",
+            wav.format, wav.bits_per_sample));
       }
 
       break;
@@ -239,8 +247,6 @@ WAVContents load_wav(FILE* f) {
       fseek(f, chunk_header.size, SEEK_CUR);
     }
   }
-
-  // if there are loops, convert the byte offsets to 
 
   return contents;
 }

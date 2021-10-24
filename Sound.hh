@@ -19,8 +19,8 @@ public:
 protected:
   explicit Sound(uint32_t sample_rate);
 
-  // these are deleted because I'm lazy. default copy/move constructors are bad
-  // here because of the AL objects
+  // These are deleted because I'm lazy. Default copy/move constructors are bad
+  // here because of the AL objects.
   Sound(const Sound&) = delete;
   Sound(Sound&&) = delete;
   Sound& operator=(const Sound&) = delete;

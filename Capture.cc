@@ -42,7 +42,7 @@ size_t AudioCapture::get_samples(void* buffer, size_t sample_count, bool wait) {
       size_t bytes_read = bytes_per_sample(this->format) * samples_to_get;
       buffer = reinterpret_cast<char*>(buffer) + bytes_read;
 
-      usleep(1000); // don't busy-wait; yield for at least 1ms (usually 10+ ms)
+      usleep(1000); // Don't busy-wait; yield for at least 1ms (usually 10+ ms)
     }
   } while (wait && sample_count);
   return samples_read;

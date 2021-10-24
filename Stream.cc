@@ -36,7 +36,7 @@ void AudioStream::add_samples(const void* buffer, size_t sample_count) {
   string& buffer_data = this->buffer_id_to_data[buffer_id];
   buffer_data.assign((const char*)buffer, sample_count * bytes_per_sample(this->format));
 
-  // add the new data to the buffer and queue it
+  // Add the new data to the buffer and queue it
   alBufferData(buffer_id, this->format, buffer_data.data(), buffer_data.size(),
       this->sample_rate);
   al_check_error();
@@ -45,7 +45,7 @@ void AudioStream::add_samples(const void* buffer, size_t sample_count) {
   this->available_buffer_ids.erase(buffer_id);
   this->queued_buffer_ids.emplace(buffer_id);
 
-  // start playing the source if it isn't already playing
+  // Start playing the source if it isn't already playing
   ALint source_state;
   alGetSourcei(this->source_id, AL_SOURCE_STATE, &source_state);
   al_check_error();
@@ -56,7 +56,7 @@ void AudioStream::add_samples(const void* buffer, size_t sample_count) {
 }
 
 void AudioStream::wait() {
-  // when all queued buffers are available, the sound is done playing
+  // When all queued buffers are available, the sound is done playing
   this->wait_for_buffers(this->all_buffer_ids.size());
 }
 

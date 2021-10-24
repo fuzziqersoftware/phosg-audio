@@ -18,17 +18,6 @@
 using namespace std;
 
 
-struct stereo8_sample {
-  int8_t left;
-  int8_t right;
-};
-
-struct stereo16_sample {
-  int16_t left;
-  int16_t right;
-};
-
-
 
 void print_usage() {
   fprintf(stderr, "\
@@ -148,10 +137,12 @@ int main(int argc, char* argv[]) {
     {
       if (verbose) {
         if (duration) {
-          fprintf(stderr, "(start) listening for %g seconds of %s data at %d kHz, writing to stdout\n",
+          fprintf(stderr,
+              "listening for %g seconds of %s data at %dHz, writing to stdout\n",
               duration, name_for_format(format), sample_rate);
         } else {
-          fprintf(stderr, "(start) listening for %s data at %d kHz, writing to stdout\n",
+          fprintf(stderr,
+              "listening for %s data at %dHz, writing to stdout\n",
               name_for_format(format), sample_rate);
         }
       }
@@ -164,7 +155,8 @@ int main(int argc, char* argv[]) {
         while (!sample_limit || (samples_captured < sample_limit)) {
           size_t sample_count = cap.get_samples(buffer, fourier_width, true);
           if (sample_count != fourier_width) {
-            fprintf(stderr, "expected %zu samples, got %zu\n", fourier_width, sample_count);
+            fprintf(stderr,
+                "expected %zu samples, got %zu\n", fourier_width, sample_count);
             throw logic_error("blocking read did not produce enough data");
           }
           vector<complex<double>> samples_complex = make_complex_multi(
@@ -172,9 +164,9 @@ int main(int argc, char* argv[]) {
           auto fourier_ret = compute_fourier_transform(samples_complex);
 
           size_t compress_factor = 21;
-          size_t cell_count = (fourier_width / compress_factor) + ((fourier_width % compress_factor) ? 1 : 0);
+          size_t cell_count = (fourier_width / compress_factor) +
+              ((fourier_width % compress_factor) ? 1 : 0);
 
-          // note: this is actually the squared magnitude
           float max_intensity = 0.0;
           vector<float> cell_intensity(cell_count, 0.0);
           for (size_t x = 0; x < fourier_ret.size(); x++) {
@@ -189,7 +181,8 @@ int main(int argc, char* argv[]) {
           const string intensity_chars(" .:+*#@");
           for (size_t x = 0; x < cell_intensity.size(); x++) {
             // intentional float truncation
-            size_t intensity_class = cell_intensity[x] / max_intensity * intensity_chars.size();
+            size_t intensity_class = cell_intensity[x] * intensity_chars.size()
+                / max_intensity;
             if (intensity_class >= intensity_chars.size()) {
               intensity_class = intensity_chars.size() - 1;
             }
@@ -207,7 +200,9 @@ int main(int argc, char* argv[]) {
         void* buffer = malloc(bytes_per_sample(format) * sample_rate);
         while (!sample_limit || (samples_captured < sample_limit)) {
           usleep(10000);
-          size_t samples_this_period = sample_limit ? (sample_limit - samples_captured) : sample_rate;
+          size_t samples_this_period = sample_limit
+              ? (sample_limit - samples_captured)
+              : sample_rate;
           size_t sample_count = cap.get_samples(buffer, samples_this_period);
           if (reverse_endian) {
             byteswap_samples(buffer, sample_count, format);
@@ -225,8 +220,7 @@ int main(int argc, char* argv[]) {
     }
 
     if (verbose) {
-      fprintf(stderr, "(done) listening for %g seconds of %s data at %d kHz, writing to stdout\n",
-          duration, name_for_format(format), sample_rate);
+      fprintf(stderr, "done listening (%g seconds)\n", duration);
     }
 
   } else if (wave_type) {
@@ -250,7 +244,8 @@ int main(int argc, char* argv[]) {
 
     if (play) {
       if (verbose) {
-        fprintf(stderr, "playing generated %d Hz %s waveform at %d kHz for %g seconds\n",
+        fprintf(stderr,
+            "playing generated %d Hz %s waveform at %dHz for %g seconds\n",
             frequency, wave_type, sample_rate, duration);
       }
       sound->play();
@@ -258,7 +253,8 @@ int main(int argc, char* argv[]) {
 
     } else {
       if (verbose) {
-        fprintf(stderr, "generating %d Hz %s waveform at %d kHz (%g seconds)\n",
+        fprintf(stderr,
+            "generating %d Hz %s waveform at %dHz (%g seconds)\n",
             frequency, wave_type, sample_rate, duration);
       }
       sound->write(stdout);
@@ -266,19 +262,20 @@ int main(int argc, char* argv[]) {
 
   } else if (play) {
     if (verbose) {
-      fprintf(stderr, "(start) playing %s data at %d kHz from stdin\n",
+      fprintf(stderr,
+          "playing %s data at %dHz from stdin\n",
           name_for_format(format), sample_rate);
     }
 
-    // high watermark: 1 second, low watermark: 1/8 second. this means we try to
+    // High watermark: 1 second, low watermark: 1/8 second. This means we try to
     // read up to 1 second of data at a time, but we'll start playing if we read
-    // 1/8 second or more
+    // 1/8 second or more.
     size_t bps = bytes_per_sample(format);
     size_t buffer_size = bps * buffer_limit;
     size_t low_watermark = buffer_limit / 8;
     void* buffer = malloc(buffer_size);
 
-    // open a stream and forward samples from stdin to it
+    // Open a stream and forward samples from stdin to it
     AudioStream stream(sample_rate, format, buffer_count);
     size_t buffer_samples = 0;
     while (!feof(stdin)) {
@@ -299,7 +296,7 @@ int main(int argc, char* argv[]) {
       }
     }
 
-    // reached EOF; write any remaining samples
+    // Reached EOF; write any remaining samples
     if (buffer_samples) {
       if (reverse_endian) {
         byteswap_samples(buffer, buffer_samples, format);
@@ -307,7 +304,7 @@ int main(int argc, char* argv[]) {
       stream.add_samples(buffer, buffer_samples);
     }
 
-    // wait for the sound to finish playing
+    // Wait for the sound to finish playing
     stream.wait();
 
     if (verbose) {

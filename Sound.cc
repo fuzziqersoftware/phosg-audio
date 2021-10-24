@@ -48,12 +48,12 @@ void Sound::create_al_objects() {
   alGenBuffers(1, &this->buffer_id);
   al_check_error();
 
-  // windows openal doesn't support float32 format, so use int16 instead
+  // Windows OpenAL doesn't support float32 format, so use int16 instead
 #ifdef WINDOWS
   auto int_samples = convert_samples_to_int(this->samples);
   alBufferData(this->buffer_id, AL_FORMAT_MONO16, int_samples.data(),
       int_samples.size() * sizeof(int16_t), this->sample_rate);
-#else // not windows
+#else
   alBufferData(this->buffer_id, alGetEnumValue("AL_FORMAT_MONO_FLOAT32"),
       this->samples.data(), this->samples.size() * sizeof(float),
       this->sample_rate);
@@ -127,10 +127,10 @@ TriangleWave::TriangleWave(float frequency, float seconds, float volume,
     size_t period_index = x / period_length;
     double factor = (double)(x % period_length) / period_length;
     if (period_index & 1) {
-      // down-slope; linear from 1 -> -1
+      // Down-slope; linear from 1 -> -1
       this->samples[x] = (1 - 2 * factor) * this->volume;
     } else {
-      // up-slope; linear from -1 -> 1
+      // Up-slope; linear from -1 -> 1
       this->samples[x] = (-1 + 2 * factor) * this->volume;
     }
   }
@@ -145,7 +145,7 @@ FrontTriangleWave::FrontTriangleWave(float frequency, float seconds,
   size_t period_length = this->sample_rate / this->frequency;
   for (size_t x = 0; x < this->samples.size(); x++) {
     double factor = (double)(x % period_length) / period_length;
-    // up-slope; linear from -1 -> 1
+    // Up-slope; linear from -1 -> 1
     this->samples[x] = (-1 + 2 * factor) * this->volume;
   }
   this->create_al_objects();
@@ -187,7 +187,7 @@ SplitNoise::SplitNoise(int split_distance, float seconds, float volume,
     }
   }
 
-  // TODO generalize
+  // TODO: generalize this
   if (fade_out) {
     for (size_t x = 0; x < this->samples.size(); x++) {
       this->samples[x] *= (float)(this->samples.size() - x) / this->samples.size();
