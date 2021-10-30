@@ -14,6 +14,7 @@ public:
   ~AudioStream();
 
   void add_samples(const void* buffer, size_t sample_count);
+  void add_frames(const void* buffer, size_t frame_count);
 
   void wait();
 

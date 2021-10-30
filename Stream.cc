@@ -25,6 +25,10 @@ AudioStream::~AudioStream() {
 }
 
 void AudioStream::add_samples(const void* buffer, size_t sample_count) {
+  this->add_frames(buffer, sample_count / (1 + is_stereo(this->format)));
+}
+
+void AudioStream::add_frames(const void* buffer, size_t frame_count) {
   if (this->available_buffer_ids.empty()) {
     this->wait_for_buffers(1);
   } else {
@@ -34,7 +38,7 @@ void AudioStream::add_samples(const void* buffer, size_t sample_count) {
   ALuint buffer_id = *this->available_buffer_ids.begin();
 
   string& buffer_data = this->buffer_id_to_data[buffer_id];
-  buffer_data.assign((const char*)buffer, sample_count * bytes_per_sample(this->format));
+  buffer_data.assign((const char*)buffer, frame_count * bytes_per_frame(this->format));
 
   // Add the new data to the buffer and queue it
   alBufferData(buffer_id, this->format, buffer_data.data(), buffer_data.size(),

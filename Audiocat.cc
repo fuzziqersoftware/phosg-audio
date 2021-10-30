@@ -132,6 +132,7 @@ int main(int argc, char* argv[]) {
   init_al();
 
   int format = format_for_name(format_name);
+  size_t bpf = bytes_per_frame(format);
 
   if (listen) {
     size_t samples_captured = 0;
@@ -148,11 +149,10 @@ int main(int argc, char* argv[]) {
         }
       }
       AudioCapture cap(NULL, sample_rate, format, sample_rate);
-      size_t bps = bytes_per_sample(format);
 
       size_t sample_limit = duration * sample_rate;
       if (output_format == OutputFormat::FFTHistogram) {
-        void* buffer = malloc(bytes_per_sample(format) * fourier_width);
+        void* buffer = malloc(bpf * fourier_width);
         while (!sample_limit || (samples_captured < sample_limit)) {
           size_t sample_count = cap.get_samples(buffer, fourier_width, true);
           if (sample_count != fourier_width) {
@@ -198,7 +198,7 @@ int main(int argc, char* argv[]) {
         free(buffer);
 
       } else {
-        void* buffer = malloc(bytes_per_sample(format) * sample_rate);
+        void* buffer = malloc(bpf * sample_rate);
         while (!sample_limit || (samples_captured < sample_limit)) {
           usleep(10000);
           size_t samples_this_period = sample_limit
@@ -209,7 +209,7 @@ int main(int argc, char* argv[]) {
             byteswap_samples(buffer, sample_count, format);
           }
           if (output_format == OutputFormat::Binary) {
-            fwrite(buffer, 1, bps * sample_count, stdout);
+            fwrite(buffer, 1, bpf * sample_count, stdout);
             fflush(stdout);
           } else {
             throw logic_error("text output not implemented");
@@ -271,8 +271,7 @@ int main(int argc, char* argv[]) {
     // High watermark: 1 second, low watermark: 1/8 second. This means we try to
     // read up to 1 second of data at a time, but we'll start playing if we read
     // 1/8 second or more.
-    size_t bps = bytes_per_sample(format);
-    size_t buffer_size = bps * buffer_limit;
+    size_t buffer_size = bpf * buffer_limit;
     size_t low_watermark = buffer_limit / 8;
     void* buffer = malloc(buffer_size);
 
@@ -281,8 +280,8 @@ int main(int argc, char* argv[]) {
     size_t buffer_samples = 0;
     while (!feof(stdin)) {
       ssize_t samples_read = fread(
-          ((uint8_t*)buffer) + (buffer_samples * bps),
-          bps, buffer_limit - buffer_samples, stdin);
+          ((uint8_t*)buffer) + (buffer_samples * bpf),
+          bpf, buffer_limit - buffer_samples, stdin);
       if (samples_read <= 0) {
         continue;
       }

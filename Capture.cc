@@ -23,27 +23,35 @@ AudioCapture::~AudioCapture() {
 }
 
 size_t AudioCapture::get_samples(void* buffer, size_t sample_count, bool wait) {
-  size_t samples_read = 0;
-  size_t samples_to_get;
+  return this->get_frames(
+      buffer,
+      sample_count / (1 + is_stereo(this->format)),
+      wait);
+}
+
+size_t AudioCapture::get_frames(void* buffer, size_t frame_count, bool wait) {
+  size_t frames_read = 0;
+  size_t frames_to_get;
   do {
-    int samples_available_int = 0;
+    int frames_available_int = 0;
     alcGetIntegerv(this->device, ALC_CAPTURE_SAMPLES, sizeof(ALint),
-        &samples_available_int);
-    size_t samples_available = static_cast<size_t>(samples_available_int);
+        &frames_available_int);
+    size_t frames_available = static_cast<size_t>(frames_available_int);
 
-    samples_to_get = (sample_count > samples_available) ? samples_available : sample_count;
+    frames_to_get = (frame_count > frames_available)
+        ? frames_available : frame_count;
     al_check_error();
-    alcCaptureSamples(this->device, buffer, samples_to_get);
-    samples_read += samples_to_get;
-    sample_count -= samples_to_get;
+    alcCaptureSamples(this->device, buffer, frames_to_get);
+    frames_read += frames_to_get;
+    frame_count -= frames_to_get;
     al_check_error();
 
-    if (wait && (samples_to_get < sample_count)) {
-      size_t bytes_read = bytes_per_sample(this->format) * samples_to_get;
+    if (wait && (frames_to_get < frame_count)) {
+      size_t bytes_read = bytes_per_frame(this->format) * frames_to_get;
       buffer = reinterpret_cast<char*>(buffer) + bytes_read;
 
       usleep(1000); // Don't busy-wait; yield for at least 1ms (usually 10+ ms)
     }
-  } while (wait && sample_count);
-  return samples_read;
+  } while (wait && frame_count);
+  return frames_read;
 }

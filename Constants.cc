@@ -79,14 +79,15 @@ bool is_32bit(int format) {
 }
 
 bool is_stereo(int format) {
-  return (format == AL_FORMAT_STEREO8) || (format == AL_FORMAT_STEREO16);
+  return (format == AL_FORMAT_STEREO8) || (format == AL_FORMAT_STEREO16) || (format == stereo_float32_format);
 }
 
 size_t bytes_per_sample(int format) {
-  if (is_32bit(format)) {
-    return 4 << is_stereo(format);
-  }
-  return 1 << (is_16bit(format) + is_stereo(format));
+  return is_32bit(format) ? 4 : (1 << is_16bit(format));
+}
+
+size_t bytes_per_frame(int format) {
+  return bytes_per_sample(format) << is_stereo(format);
 }
 
 const char* name_for_format(int format) {

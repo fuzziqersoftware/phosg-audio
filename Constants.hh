@@ -40,6 +40,7 @@ bool is_16bit(int format);
 bool is_32bit(int format);
 bool is_stereo(int format);
 size_t bytes_per_sample(int format);
+size_t bytes_per_frame(int format);
 
 const char* name_for_format(int format);
 int format_for_name(const char* format);
