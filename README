@@ -1,11 +1,8 @@
 phosg-audio is a basic C++ wrapper library around OpenAL.
 
 Building & installing on macOS or Linux:
-0. Make sure you have Make, g++ and OpenAL installed.
-1. `make`
+0. Make sure you have CMake, g++ and OpenAL installed.
+1. `cmake . && make`
 2. `sudo make install`
 
-Building on Windows is not straightforward. Install MinGW-w64, then read the
-comments in the makefile.
-
-Should work on macOS, Ubuntu (and probably other Linuxes), and Windows.
+Should work on macOS, Ubuntu (and probably other Linuxes). Might work on Windows.

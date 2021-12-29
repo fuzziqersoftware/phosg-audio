@@ -1,6 +1,15 @@
+# Finder files (macOS)
 .DS_Store
-*.dSYM
-*.o
-gmon.out
+
+# Build products
 libphosg-audio.a
 audiocat
+
+# CMake files
+CMakeCache.txt
+CMakeFiles
+Makefile
+CTestTestFile.cmake
+Testing
+cmake_install.cmake
+install_manifest.txt
