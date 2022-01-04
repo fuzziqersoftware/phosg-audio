@@ -11,12 +11,16 @@ env:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
 
     steps:
     - uses: actions/checkout@v2
 
-    - name: Install libraries
+    - name: Install phosg
       run: |
         git clone https://github.com/fuzziqersoftware/phosg.git
         cd phosg
