@@ -88,7 +88,7 @@ int main(int argc, char* argv[]) {
   size_t fourier_width = 4096;
   bool reverse_endian = false;
   const char* format_name = "mono-i16";
-  OutputFormat output_format;
+  OutputFormat output_format = OutputFormat::Binary;
   for (int x = 1; x < argc; x++) {
     if (!strcmp(argv[x], "--verbose")) {
       verbose = true;
