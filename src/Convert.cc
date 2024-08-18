@@ -1,14 +1,15 @@
 #include "Constants.hh"
 
 #include <errno.h>
+#include <phosg/Encoding.hh>
 #include <stdlib.h>
 #include <string.h>
-#include <phosg/Encoding.hh>
 
 #include <stdexcept>
 
 using namespace std;
 
+namespace phosg_audio {
 
 void byteswap_samples16(void* buffer, size_t sample_count, bool stereo) {
   if (stereo) {
@@ -17,7 +18,7 @@ void byteswap_samples16(void* buffer, size_t sample_count, bool stereo) {
 
   int16_t* samples = reinterpret_cast<int16_t*>(buffer);
   for (size_t x = 0; x < sample_count; x++) {
-    samples[x] = bswap16(samples[x]);
+    samples[x] = phosg::bswap16(samples[x]);
   }
 }
 
@@ -28,7 +29,7 @@ void byteswap_samples32(void* buffer, size_t sample_count, bool stereo) {
 
   int32_t* samples = reinterpret_cast<int32_t*>(buffer);
   for (size_t x = 0; x < sample_count; x++) {
-    samples[x] = bswap32(samples[x]);
+    samples[x] = phosg::bswap32(samples[x]);
   }
 }
 
@@ -108,8 +109,6 @@ static inline float convert_sample_u8_to_f32(uint8_t sample) {
   return static_cast<float>(sample) / 127.0f - 1.0;
 }
 
-
-
 template <typename InSampleT, typename OutSampleT, OutSampleT (*ConvertFn)(InSampleT)>
 vector<OutSampleT> convert_samples(const vector<InSampleT>& samples) {
   vector<OutSampleT> ret;
@@ -151,3 +150,5 @@ vector<int8_t> convert_samples_f32_to_s8(const vector<float>& samples) {
 vector<uint8_t> convert_samples_f32_to_u8(const vector<float>& samples) {
   return convert_samples<float, uint8_t, convert_sample_f32_to_u8>(samples);
 }
+
+} // namespace phosg_audio

@@ -9,16 +9,14 @@
 #include <memory>
 #include <phosg/Encoding.hh>
 
+#include "Capture.hh"
 #include "Constants.hh"
 #include "Convert.hh"
-#include "Capture.hh"
 #include "FourierTransform.hh"
 #include "Sound.hh"
 #include "Stream.hh"
 
 using namespace std;
-
-
 
 void print_usage() {
   fprintf(stderr, "\
@@ -64,15 +62,11 @@ Options:\n\
 ");
 }
 
-
-
 enum class OutputFormat {
   Binary = 0,
   Text,
   FFTHistogram,
 };
-
-
 
 int main(int argc, char* argv[]) {
 
@@ -119,8 +113,8 @@ int main(int argc, char* argv[]) {
     } else if (!strncmp(argv[x], "--freq=", 7)) {
       frequency = atoi(&argv[x][7]);
     } else if (!strncmp(argv[x], "--note=", 7)) {
-      uint8_t note = note_for_name(&argv[x][7]);
-      frequency = frequency_for_note(note);
+      uint8_t note = phosg_audio::note_for_name(&argv[x][7]);
+      frequency = phosg_audio::frequency_for_note(note);
     } else if (!strncmp(argv[x], "--duration=", 11)) {
       duration = atof(&argv[x][11]);
     } else {
@@ -129,10 +123,10 @@ int main(int argc, char* argv[]) {
     }
   }
 
-  init_al();
+  phosg_audio::init_al();
 
-  int format = format_for_name(format_name);
-  size_t bpf = bytes_per_frame(format);
+  int format = phosg_audio::format_for_name(format_name);
+  size_t bpf = phosg_audio::bytes_per_frame(format);
 
   if (listen) {
     size_t samples_captured = 0;
@@ -141,14 +135,14 @@ int main(int argc, char* argv[]) {
         if (duration) {
           fprintf(stderr,
               "listening for %g seconds of %s data at %dHz, writing to stdout\n",
-              duration, name_for_format(format), sample_rate);
+              duration, phosg_audio::name_for_format(format), sample_rate);
         } else {
           fprintf(stderr,
               "listening for %s data at %dHz, writing to stdout\n",
-              name_for_format(format), sample_rate);
+              phosg_audio::name_for_format(format), sample_rate);
         }
       }
-      AudioCapture cap(NULL, sample_rate, format, sample_rate);
+      phosg_audio::AudioCapture cap(NULL, sample_rate, format, sample_rate);
 
       size_t sample_limit = duration * sample_rate;
       if (output_format == OutputFormat::FFTHistogram) {
@@ -156,17 +150,15 @@ int main(int argc, char* argv[]) {
         while (!sample_limit || (samples_captured < sample_limit)) {
           size_t sample_count = cap.get_samples(buffer, fourier_width, true);
           if (sample_count != fourier_width) {
-            fprintf(stderr,
-                "expected %zu samples, got %zu\n", fourier_width, sample_count);
+            fprintf(stderr, "expected %zu samples, got %zu\n", fourier_width, sample_count);
             throw logic_error("blocking read did not produce enough data");
           }
-          vector<complex<double>> samples_complex = make_complex_multi(
+          vector<complex<double>> samples_complex = phosg_audio::make_complex_multi(
               reinterpret_cast<const float*>(buffer), fourier_width);
-          auto fourier_ret = compute_fourier_transform(samples_complex);
+          auto fourier_ret = phosg_audio::compute_fourier_transform(samples_complex);
 
           size_t compress_factor = 21;
-          size_t cell_count = (fourier_width / compress_factor) +
-              ((fourier_width % compress_factor) ? 1 : 0);
+          size_t cell_count = (fourier_width / compress_factor) + ((fourier_width % compress_factor) ? 1 : 0);
 
           float max_intensity = 0.0;
           vector<float> cell_intensity(cell_count, 0.0);
@@ -182,8 +174,7 @@ int main(int argc, char* argv[]) {
           const string intensity_chars(" .:+*#@");
           for (size_t x = 0; x < cell_intensity.size(); x++) {
             // intentional float truncation
-            size_t intensity_class = cell_intensity[x] * intensity_chars.size()
-                / max_intensity;
+            size_t intensity_class = cell_intensity[x] * intensity_chars.size() / max_intensity;
             if (intensity_class >= intensity_chars.size()) {
               intensity_class = intensity_chars.size() - 1;
             }
@@ -206,7 +197,7 @@ int main(int argc, char* argv[]) {
               : sample_rate;
           size_t sample_count = cap.get_samples(buffer, samples_this_period);
           if (reverse_endian) {
-            byteswap_samples(buffer, sample_count, format);
+            phosg_audio::byteswap_samples(buffer, sample_count, format);
           }
           if (output_format == OutputFormat::Binary) {
             fwrite(buffer, 1, bpf * sample_count, stdout);
@@ -225,19 +216,19 @@ int main(int argc, char* argv[]) {
     }
 
   } else if (wave_type) {
-    shared_ptr<GeneratedSound> sound;
+    shared_ptr<phosg_audio::GeneratedSound> sound;
     if (!strcmp(wave_type, "sine")) {
-      sound.reset(new SineWave(frequency, duration, 1.0, sample_rate));
+      sound.reset(new phosg_audio::SineWave(frequency, duration, 1.0, sample_rate));
     } else if (!strcmp(wave_type, "square")) {
-      sound.reset(new SquareWave(frequency, duration, 1.0, sample_rate));
+      sound.reset(new phosg_audio::SquareWave(frequency, duration, 1.0, sample_rate));
     } else if (!strcmp(wave_type, "triangle")) {
-      sound.reset(new TriangleWave(frequency, duration, 1.0, sample_rate));
+      sound.reset(new phosg_audio::TriangleWave(frequency, duration, 1.0, sample_rate));
     } else if (!strcmp(wave_type, "front-triangle")) {
-      sound.reset(new FrontTriangleWave(frequency, duration, 1.0, sample_rate));
+      sound.reset(new phosg_audio::FrontTriangleWave(frequency, duration, 1.0, sample_rate));
     } else if (!strcmp(wave_type, "white-noise")) {
-      sound.reset(new WhiteNoise(duration, 1.0, sample_rate));
+      sound.reset(new phosg_audio::WhiteNoise(duration, 1.0, sample_rate));
     } else if (!strcmp(wave_type, "split-noise")) {
-      sound.reset(new SplitNoise(frequency, duration, 1.0, sample_rate));
+      sound.reset(new phosg_audio::SplitNoise(frequency, duration, 1.0, sample_rate));
     } else {
       fprintf(stderr, "unsupported wave type: %s\n", wave_type);
       return 1;
@@ -263,9 +254,7 @@ int main(int argc, char* argv[]) {
 
   } else if (play) {
     if (verbose) {
-      fprintf(stderr,
-          "playing %s data at %dHz from stdin\n",
-          name_for_format(format), sample_rate);
+      fprintf(stderr, "playing %s data at %dHz from stdin\n", phosg_audio::name_for_format(format), sample_rate);
     }
 
     // High watermark: 1 second, low watermark: 1/8 second. This means we try to
@@ -276,7 +265,7 @@ int main(int argc, char* argv[]) {
     void* buffer = malloc(buffer_size);
 
     // Open a stream and forward samples from stdin to it
-    AudioStream stream(sample_rate, format, buffer_count);
+    phosg_audio::AudioStream stream(sample_rate, format, buffer_count);
     size_t buffer_samples = 0;
     while (!feof(stdin)) {
       ssize_t samples_read = fread(
@@ -289,7 +278,7 @@ int main(int argc, char* argv[]) {
 
       if (buffer_samples >= low_watermark) {
         if (reverse_endian) {
-          byteswap_samples(buffer, buffer_samples, format);
+          phosg_audio::byteswap_samples(buffer, buffer_samples, format);
         }
         stream.add_samples(buffer, buffer_samples);
         buffer_samples = 0;
@@ -299,7 +288,7 @@ int main(int argc, char* argv[]) {
     // Reached EOF; write any remaining samples
     if (buffer_samples) {
       if (reverse_endian) {
-        byteswap_samples(buffer, buffer_samples, format);
+        phosg_audio::byteswap_samples(buffer, buffer_samples, format);
       }
       stream.add_samples(buffer, buffer_samples);
     }
@@ -308,14 +297,13 @@ int main(int argc, char* argv[]) {
     stream.wait();
 
     if (verbose) {
-      fprintf(stderr, "(done) playing %s data at %d kHz from stdin\n",
-          name_for_format(format), sample_rate);
+      fprintf(stderr, "(done) playing %s data at %d kHz from stdin\n", phosg_audio::name_for_format(format), sample_rate);
     }
 
   } else {
     fprintf(stderr, "one of --play, --listen, or --wave must be given\n");
     print_usage();
-    exit_al();
+    phosg_audio::exit_al();
     return 2;
   }
 

@@ -9,6 +9,8 @@ audiocat
 CMakeCache.txt
 CMakeFiles
 Makefile
+phosg-audioConfig.cmake
+phosg-audioConfigVersion.cmake
 CTestTestFile.cmake
 Testing
 cmake_install.cmake

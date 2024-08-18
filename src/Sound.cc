@@ -11,10 +11,10 @@
 
 using namespace std;
 
+namespace phosg_audio {
 
-
-Sound::Sound(uint32_t sample_rate) : buffer_id(0), source_id(0),
-    sample_rate(sample_rate) { }
+Sound::Sound(uint32_t sample_rate)
+    : buffer_id(0), source_id(0), sample_rate(sample_rate) {}
 
 Sound::~Sound() {
   if (this->source_id) {
@@ -65,48 +65,39 @@ void Sound::create_al_objects() {
   al_check_error();
 }
 
-
-
 SampledSound::SampledSound(const char* filename) : Sound(0) {
   auto wav = load_wav(filename);
   this->sample_rate = wav.sample_rate;
-  this->samples = move(wav.samples);
+  this->samples = std::move(wav.samples);
   this->create_al_objects();
 }
 
-SampledSound::SampledSound(const string& filename) : SampledSound(filename.c_str()) { }
+SampledSound::SampledSound(const string& filename) : SampledSound(filename.c_str()) {}
 
 SampledSound::SampledSound(FILE* f) : Sound(0) {
   auto wav = load_wav(f);
   this->sample_rate = wav.sample_rate;
-  this->samples = move(wav.samples);
+  this->samples = std::move(wav.samples);
   this->create_al_objects();
 }
 
-
-
 GeneratedSound::GeneratedSound(float seconds, float volume,
-    uint32_t sample_rate) : Sound(sample_rate), seconds(seconds),
-    volume(volume) {
+    uint32_t sample_rate) : Sound(sample_rate), seconds(seconds), volume(volume) {
   this->samples.resize(this->seconds * this->sample_rate);
 }
 
-
-
 SineWave::SineWave(float frequency, float seconds, float volume,
     uint32_t sample_rate) : GeneratedSound(seconds, volume, sample_rate),
-    frequency(frequency) {
+                            frequency(frequency) {
   for (size_t x = 0; x < this->samples.size(); x++) {
     this->samples[x] = sin((6.283185307179586 * this->frequency) / this->sample_rate * x) * this->volume;
   }
   this->create_al_objects();
 }
 
-
-
 SquareWave::SquareWave(float frequency, float seconds, float volume,
     uint32_t sample_rate) : GeneratedSound(seconds, volume, sample_rate),
-    frequency(frequency) {
+                            frequency(frequency) {
   for (size_t x = 0; x < this->samples.size(); x++) {
     if ((uint64_t)((2 * this->frequency) / this->sample_rate * x) & 1) {
       this->samples[x] = this->volume;
@@ -117,11 +108,9 @@ SquareWave::SquareWave(float frequency, float seconds, float volume,
   this->create_al_objects();
 }
 
-
-
 TriangleWave::TriangleWave(float frequency, float seconds, float volume,
     uint32_t sample_rate) : GeneratedSound(seconds, volume, sample_rate),
-    frequency(frequency) {
+                            frequency(frequency) {
   size_t period_length = this->sample_rate / (2 * this->frequency);
   for (size_t x = 0; x < this->samples.size(); x++) {
     size_t period_index = x / period_length;
@@ -137,11 +126,8 @@ TriangleWave::TriangleWave(float frequency, float seconds, float volume,
   this->create_al_objects();
 }
 
-
-
 FrontTriangleWave::FrontTriangleWave(float frequency, float seconds,
-    float volume, uint32_t sample_rate) :
-    GeneratedSound(seconds, volume, sample_rate), frequency(frequency) {
+    float volume, uint32_t sample_rate) : GeneratedSound(seconds, volume, sample_rate), frequency(frequency) {
   size_t period_length = this->sample_rate / this->frequency;
   for (size_t x = 0; x < this->samples.size(); x++) {
     double factor = (double)(x % period_length) / period_length;
@@ -151,22 +137,16 @@ FrontTriangleWave::FrontTriangleWave(float frequency, float seconds,
   this->create_al_objects();
 }
 
-
-
-WhiteNoise::WhiteNoise(float seconds, float volume, uint32_t sample_rate) :
-    GeneratedSound(seconds, volume, sample_rate) {
+WhiteNoise::WhiteNoise(float seconds, float volume, uint32_t sample_rate) : GeneratedSound(seconds, volume, sample_rate) {
   for (size_t x = 0; x < this->samples.size(); x++) {
     this->samples[x] = (static_cast<float>(rand() * 2) / RAND_MAX) - 1.0;
   }
   this->create_al_objects();
 }
 
-
-
 SplitNoise::SplitNoise(int split_distance, float seconds, float volume,
-    bool fade_out, uint32_t sample_rate) :
-    GeneratedSound(seconds, volume, sample_rate),
-    split_distance(split_distance) {
+    bool fade_out, uint32_t sample_rate) : GeneratedSound(seconds, volume, sample_rate),
+                                           split_distance(split_distance) {
 
   for (size_t x = 0; x < this->samples.size(); x += split_distance) {
     this->samples[x] = (static_cast<float>(rand() * 2) / RAND_MAX) - 1.0;
@@ -195,3 +175,5 @@ SplitNoise::SplitNoise(int split_distance, float seconds, float volume,
   }
   this->create_al_objects();
 }
+
+} // namespace phosg_audio

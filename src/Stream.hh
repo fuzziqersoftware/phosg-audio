@@ -6,7 +6,7 @@
 #include <unordered_map>
 #include <unordered_set>
 
-
+namespace phosg_audio {
 
 class AudioStream {
 public:
@@ -35,3 +35,5 @@ private:
   std::unordered_map<ALuint, std::string> buffer_id_to_data;
   ALuint source_id;
 };
+
+} // namespace phosg_audio

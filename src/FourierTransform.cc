@@ -2,11 +2,9 @@
 
 using namespace std;
 
-
+namespace phosg_audio {
 
 static const double pi = 3.14159265358979323846;
-
-
 
 vector<complex<double>> make_complex_multi(const vector<float>& input) {
   return make_complex_multi(input.data(), input.size());
@@ -20,8 +18,6 @@ vector<complex<double>> make_complex_multi(const float* input, size_t count) {
   }
   return res;
 }
-
-
 
 void compute_fourier_transform_recursive(const vector<complex<double>>& input,
     size_t input_start_index, size_t input_stride, size_t input_count,
@@ -50,9 +46,10 @@ void compute_fourier_transform_recursive(const vector<complex<double>>& input,
   }
 }
 
-vector<complex<double>> compute_fourier_transform(
-    const vector<complex<double>>& input) {
+vector<complex<double>> compute_fourier_transform(const vector<complex<double>>& input) {
   vector<complex<double>> output(input.size());
   compute_fourier_transform_recursive(input, 0, 1, input.size(), output, 0);
   return output;
 }
+
+} // namespace phosg_audio

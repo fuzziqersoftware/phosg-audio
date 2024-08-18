@@ -2,12 +2,11 @@
 
 #include "Constants.hh"
 
-
+namespace phosg_audio {
 
 class AudioCapture {
 public:
-  AudioCapture(const char* device_name, int sample_rate, int format,
-      int buffer_size);
+  AudioCapture(const char* device_name, int sample_rate, int format, int buffer_size);
   ~AudioCapture();
 
   // Gets up to frame_count frames from the buffer, returning the number of
@@ -21,3 +20,5 @@ private:
   ALCdevice* device;
   int format;
 };
+
+} // namespace phosg_audio

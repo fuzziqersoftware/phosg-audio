@@ -4,10 +4,10 @@
 
 using namespace std;
 
+namespace phosg_audio {
 
-
-AudioStream::AudioStream(int sample_rate, int format, size_t num_buffers) :
-    sample_rate(sample_rate), format(format), all_buffer_ids(num_buffers) {
+AudioStream::AudioStream(int sample_rate, int format, size_t num_buffers)
+    : sample_rate(sample_rate), format(format), all_buffer_ids(num_buffers) {
   alGenBuffers(this->all_buffer_ids.size(), this->all_buffer_ids.data());
   al_check_error();
 
@@ -41,8 +41,7 @@ void AudioStream::add_frames(const void* buffer, size_t frame_count) {
   buffer_data.assign((const char*)buffer, frame_count * bytes_per_frame(this->format));
 
   // Add the new data to the buffer and queue it
-  alBufferData(buffer_id, this->format, buffer_data.data(), buffer_data.size(),
-      this->sample_rate);
+  alBufferData(buffer_id, this->format, buffer_data.data(), buffer_data.size(), this->sample_rate);
   al_check_error();
   alSourceQueueBuffers(this->source_id, 1, &buffer_id);
   al_check_error();
@@ -101,3 +100,5 @@ void AudioStream::wait_for_buffers(size_t num_buffers) {
     usleep(1000);
   }
 }
+
+} // namespace phosg_audio

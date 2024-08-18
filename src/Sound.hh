@@ -4,7 +4,7 @@
 
 #include "Constants.hh"
 
-
+namespace phosg_audio {
 
 class Sound {
 public:
@@ -48,8 +48,7 @@ public:
   virtual ~GeneratedSound() = default;
 
 protected:
-  explicit GeneratedSound(float seconds, float volume = 1.0,
-      uint32_t sample_rate = 44100);
+  explicit GeneratedSound(float seconds, float volume = 1.0, uint32_t sample_rate = 44100);
 
   float seconds;
   float volume;
@@ -57,8 +56,7 @@ protected:
 
 class SineWave : public GeneratedSound {
 public:
-  SineWave(float frequency, float seconds, float volume = 1.0,
-      uint32_t sample_rate = 44100);
+  SineWave(float frequency, float seconds, float volume = 1.0, uint32_t sample_rate = 44100);
   virtual ~SineWave() = default;
 
 protected:
@@ -67,8 +65,7 @@ protected:
 
 class SquareWave : public GeneratedSound {
 public:
-  SquareWave(float frequency, float seconds, float volume = 1.0,
-      uint32_t sample_rate = 44100);
+  SquareWave(float frequency, float seconds, float volume = 1.0, uint32_t sample_rate = 44100);
   virtual ~SquareWave() = default;
 
 protected:
@@ -77,8 +74,7 @@ protected:
 
 class TriangleWave : public GeneratedSound {
 public:
-  TriangleWave(float frequency, float seconds, float volume = 1.0,
-      uint32_t sample_rate = 44100);
+  TriangleWave(float frequency, float seconds, float volume = 1.0, uint32_t sample_rate = 44100);
   virtual ~TriangleWave() = default;
 
 protected:
@@ -87,8 +83,7 @@ protected:
 
 class FrontTriangleWave : public GeneratedSound {
 public:
-  FrontTriangleWave(float frequency, float seconds, float volume = 1.0,
-      uint32_t sample_rate = 44100);
+  FrontTriangleWave(float frequency, float seconds, float volume = 1.0, uint32_t sample_rate = 44100);
   virtual ~FrontTriangleWave() = default;
 
 protected:
@@ -103,10 +98,11 @@ public:
 
 class SplitNoise : public GeneratedSound {
 public:
-  SplitNoise(int split_distance, float seconds, float volume = 1.0,
-      bool fade_out = false, uint32_t sample_rate = 44100);
+  SplitNoise(int split_distance, float seconds, float volume = 1.0, bool fade_out = false, uint32_t sample_rate = 44100);
   virtual ~SplitNoise() = default;
 
 protected:
   int split_distance;
 };
+
+} // namespace phosg_audio
