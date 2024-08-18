@@ -115,14 +115,15 @@ struct SampleChunkHeader {
   phosg::le_uint32_t num_loops;
   phosg::le_uint32_t sampler_data;
 
-  struct {
+  struct Loop {
     phosg::le_uint32_t cue_point_id;
     phosg::le_uint32_t type; // 0 = normal, 1 = ping-pong, 2 = reverse
     phosg::le_uint32_t start; // byte offset into the wave data
     phosg::le_uint32_t end; // byte offset into the wave data
     phosg::le_uint32_t fraction; // fraction of a sample to loop
     phosg::le_uint32_t play_count; // 0 = loop forever
-  } loops[0];
+  } __attribute__((packed));
+  Loop loops[0];
 } __attribute__((packed));
 
 WAVContents load_wav(const char* filename) {
