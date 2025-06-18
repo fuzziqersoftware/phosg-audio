@@ -1,13 +1,8 @@
-#define __STDC_FORMAT_MACROS
-
 #include "File.hh"
-
-#include <inttypes.h>
-#include <string.h>
 
 #include <phosg/Encoding.hh>
 #include <phosg/Filesystem.hh>
-#include <phosg/Strings.hh>
+#include <format>
 #include <vector>
 
 using namespace std;
@@ -136,7 +131,7 @@ WAVContents load_wav(FILE* f) {
     phosg::be_uint32_t magic;
     phosg::freadx(f, &magic, sizeof(uint32_t));
     if (magic != 0x52494646) { // 'RIFF'
-      throw runtime_error(phosg::string_printf("unknown file format: %08" PRIX32, magic.load()));
+      throw runtime_error(format("unknown file format: {:08X}", magic.load()));
     }
   }
 
@@ -155,14 +150,14 @@ WAVContents load_wav(FILE* f) {
       phosg::freadx(f, reinterpret_cast<uint8_t*>(&wav) + sizeof(RIFFChunkHeader), sizeof(WAVEHeader) - sizeof(RIFFChunkHeader));
 
       if (wav.wave_magic != 0x45564157) { // 'WAVE'
-        throw runtime_error(phosg::string_printf("sound has incorrect wave_magic (%" PRIX32 ")", wav.wave_magic.load()));
+        throw runtime_error(format("sound has incorrect wave_magic ({:X})", wav.wave_magic.load()));
       }
       if (wav.fmt_magic != 0x20746D66) { // 'fmt '
-        throw runtime_error(phosg::string_printf("sound has incorrect fmt_magic (%" PRIX32 ")", wav.fmt_magic.load()));
+        throw runtime_error(format("sound has incorrect fmt_magic ({:X})", wav.fmt_magic.load()));
       }
       // We only support mono and stereo files for now
       if (wav.num_channels > 2) {
-        throw runtime_error(phosg::string_printf("sound has too many channels (%hu)", wav.num_channels.load()));
+        throw runtime_error(format("sound has too many channels ({})", wav.num_channels.load()));
       }
 
       contents.sample_rate = wav.sample_rate;
@@ -220,8 +215,8 @@ WAVContents load_wav(FILE* f) {
           contents.samples[x] = (static_cast<float>(int_samples[x]) / 128.0f) - 1.0f;
         }
       } else {
-        throw runtime_error(phosg::string_printf(
-            "sample width is not supported (format=%hu, bits_per_sample=%hu)",
+        throw runtime_error(format(
+            "sample width is not supported (format={}, bits_per_sample={})",
             wav.format.load(), wav.bits_per_sample.load()));
       }
 
