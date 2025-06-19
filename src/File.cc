@@ -1,8 +1,10 @@
 #include "File.hh"
 
+#include <string.h>
+
+#include <format>
 #include <phosg/Encoding.hh>
 #include <phosg/Filesystem.hh>
-#include <format>
 #include <vector>
 
 using namespace std;
