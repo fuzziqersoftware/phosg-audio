@@ -75,7 +75,7 @@ int main(int argc, char* argv[]) {
   bool play = false;
   int sample_rate = 44100;
   const char* wave_type = NULL;
-  int frequency;
+  int frequency = 440;
   double duration = 0.0; // indefinite
   size_t buffer_limit = 2048;
   size_t buffer_count = 4;
